@@ -1,10 +1,12 @@
 <script lang="ts">
+	import Board from "./components/Board.svelte"
 	export let name: string;
 </script>
 
 <main>
-	<h1>Hello {name}!</h1>
+	<h1>Svelte Sweeper</h1>
 </main>
+<Board></Board>
 
 <style>
 	main {
