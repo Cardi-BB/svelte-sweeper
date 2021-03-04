@@ -4,56 +4,83 @@
 
   const dispatch = createEventDispatcher();
 
-  const _class_map = new Map([
-    [-2, "blank"],
-    [-1, "bombrevealed"],
-    [0, "open"],
-    [1, "open1"],
-    [2, "open2"],
-    [3, "open3"],
-    [4, "open4"],
-    [5, "open5"],
-    [6, "open6"],
-    [7, "open7"],
-    [8, "open8"],
-  ]);
   export let x: number;
   export let y: number;
   export let context: Minesweeper;
-  let value: number = -2;
-  $: _class = _class_map.get(value);
+  export let flagged: boolean = false;
+  export let num_flagged: number;
+  let _class: string = "blank";
 
+  export function reset() {
+    flagged = false;
+    _class = "blank";
+  }
   export function update() {
     if (context.revealed[x][y]) {
-      value = context.board[x][y];
+      if (context.board[x][y] === -1) {
+        _class = "bombdeath";
+        dispatch("lose");
+      } else {
+        _class = "open" + context.board[x][y];
+      }
     }
   }
-  function set_class(s: number) {
-    if (!context.revealed[x][y]) {
-      value = s;
+  export function lose() {
+    if(flagged && context.board[x][y] !== -1) {
+      _class = "bombmisflagged";
+    } else if( context.board[x][y] === -1) {
+      _class = "bombrevealed";
+    }
+
+  }
+  function set_class(s: string) {
+    if (!context.revealed[x][y] && !flagged) {
+      _class = s;
     }
   }
   function handleMouseDown(e: MouseEvent) {
+    if (context.lost || context.won) return true;
     if (e.button === 0) {
-      set_class(0);
+      set_class("open0");
+    } else if (e.button === 2) {
+      if(flagged) { //already flagged
+        flagged = false;
+        num_flagged--;
+        set_class("blank");
+      } else {
+        set_class("bombflagged");
+        flagged = true;
+        num_flagged++;
+      }
     }
   }
   function handleMouseUp(e: MouseEvent) {
+    if (context.lost || context.won ) return true;
     if (!context.revealed[x][y] && e.button === 0) {
       context.reveal(x, y);
-      dispatch('update');
+      dispatch("update");
+      if( context.won ) {
+        dispatch("won");
+      }
     }
   }
   function handleMouseEnter(e: MouseEvent) {
+    if (context.lost || context.won) return true;
     if (e.button === 0) {
-      set_class(0);
+      set_class("open0");
     }
   }
   function handleMouseLeave(e: MouseEvent) {
+    if (context.lost || context.won) return true;
     // console.log("leave", e);
     if (e.button === 0) {
-      set_class(-2);
+      set_class("blank");
     }
+  }
+  //Prevent context menu appearing on right click
+  function handleContextMenu(e: MouseEvent) {
+    e.preventDefault();
+    return false;
   }
 </script>
 
@@ -63,6 +90,7 @@
   on:mouseup={handleMouseUp}
   on:mouseenter={handleMouseEnter}
   on:mouseleave={handleMouseLeave}
+  on:contextmenu={handleContextMenu}
 />
 
 <style>
@@ -71,67 +99,56 @@
     line-height: 0;
     font-size: 0;
     background-image: url(../sprite100.gif);
+    width: 16px;
+    height: 16px;
   }
   .blank {
     background-position: 0 -39px;
-    width: 16px;
-    height: 16px;
   }
-  .open {
+  .open0 {
     background-position: 0 -23px;
-    width: 16px;
-    height: 16px;
   }
   .open1 {
     background-position: -16px -23px;
-    width: 16px;
-    height: 16px;
   }
 
   .open2 {
     background-position: -32px -23px;
-    width: 16px;
-    height: 16px;
   }
 
   .open3 {
     background-position: -48px -23px;
-    width: 16px;
-    height: 16px;
   }
 
   .open4 {
     background-position: -64px -23px;
-    width: 16px;
-    height: 16px;
   }
 
   .open5 {
     background-position: -80px -23px;
-    width: 16px;
-    height: 16px;
   }
 
   .open6 {
     background-position: -96px -23px;
-    width: 16px;
-    height: 16px;
   }
 
   .open7 {
     background-position: -112px -23px;
-    width: 16px;
-    height: 16px;
   }
 
   .open8 {
     background-position: -128px -23px;
-    width: 16px;
-    height: 16px;
   }
   .bombrevealed {
     background-position: -64px -39px;
-    width: 16px;
-    height: 16px;
+  }
+  .bombflagged {
+    background-position: -16px -39px;
+  }
+  .bombmisflagged {
+    background-position: -48px -39px;
+  }
+  .bombdeath {
+    background-position: -32px -39px;
   }
 </style>

@@ -30,6 +30,8 @@ export class Minesweeper {
   board: number[][];
   revealed: number[][];
 
+  lost: boolean;
+  won: boolean;
   width: number;
   height: number;
   num_mines: number;
@@ -38,6 +40,8 @@ export class Minesweeper {
     this.reset(width, height, num_mines);
   }
   reset(width: number, height: number, num_mines: number = null) {
+    this.lost = false;
+    this.won = false;
     this.width = width;
     this.height = height;
     this.num_mines = num_mines;
@@ -67,13 +71,10 @@ export class Minesweeper {
       }
     }
     this.revealed = reshape(
-      shuffleArray(
-        Array.apply(null, Array(width * height)).map(() => false)
-      ),
+      shuffleArray(Array.apply(null, Array(width * height)).map(() => false)),
       width,
       height
     );
-
   }
 
   reveal(x: number, y: number) {
@@ -95,11 +96,15 @@ export class Minesweeper {
       this.reveal(x + 1, y - 1);
       this.reveal(x + 1, y);
       this.reveal(x + 1, y + 1);
-    } 
+    }
+    let numRevealed = this.revealed.reduce((a, b) => a.concat(b)).reduce((a, b) => a + b);
+    if ( (this.width * this.height - numRevealed) === this.num_mines) {
+      this.won = true;
+    }
   }
 
   lose() {
-    console.log("U lost...");
+    this.lost = true;
   }
 
   mines_around(row: number, col: number) {
